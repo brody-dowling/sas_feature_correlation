@@ -3,9 +3,19 @@ import librosa
 import os
 import csv
 import numpy as np
+import pandas as pd
+from ast import literal_eval
+from scipy.stats import pearsonr
 
 
 def main():
+    feature_data = extract_features()
+    create_csv_file(feature_data)
+    generate_matrix()
+
+
+def extract_features():
+
     # Stores a list of dicts containing file feature data
     feature_data = []
 
@@ -19,7 +29,7 @@ def main():
         else:
             continue
 
-    create_csv_file(feature_data)
+    return feature_data
 
 
 def get_features(filename):
@@ -56,6 +66,8 @@ def get_features(filename):
     # extracts tonnetz form harmonic component of a song
     tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
 
+    # mcff/rms
+
     return {'file_name': os.path.basename(filename), "tempo": tempo[0], "tempogram": tempogram,
             "spec_cent": spec_cent, "spec_bw": spec_bw, "spec_cont": spec_cont, "spec_flat": spec_flat,
             "tonnetz": tonnetz}
@@ -71,4 +83,26 @@ def create_csv_file(feature_data):
             writer.writerow(entry)
 
 
-main()
+def corr_np(data1, data2):
+    mean1 = data1.mean()
+    mean2 = data2.mean()
+    std1 = data1.std()
+    std2 = data2.std()
+    corr = ((data1*data2).mean()-mean1*mean2)/(std1*std2)
+    return corr
+
+
+def generate_matrix():
+    fd_file_name = os.getcwd() + "/audioData/feature_data.csv"
+    dr_file_name = os.getcwd() + "/audioData/danger_ratings.csv"
+
+    df = pd.read_csv(fd_file_name)
+    dr = pd.read_csv(dr_file_name)
+
+    tempo_data = df.loc[:, "tempo"]
+    danger_ratings = dr.loc[:, "danger_rating"]
+    print(np.corrcoef(tempo_data, danger_ratings))
+
+
+if __name__ == "__main__":
+    main()
