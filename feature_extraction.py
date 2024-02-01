@@ -66,30 +66,26 @@ def get_features(filename):
     # extracts tonnetz form harmonic component of a song
     tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
 
-    # mcff/rms
+    # extraxts mcff
+    mcff = librosa.feature.mfcc(y=y, sr=sr)
+
+    # extracts root mean square value for each frame
+    rms = librosa.feature.rms(y=y)
 
     return {'file_name': os.path.basename(filename), "tempo": tempo[0], "tempogram": tempogram,
             "spec_cent": spec_cent, "spec_bw": spec_bw, "spec_cont": spec_cont, "spec_flat": spec_flat,
-            "tonnetz": tonnetz}
+            "tonnetz": tonnetz, "mcff": mcff, "rms": rms}
 
 
 def create_csv_file(feature_data):
     filename = os.getcwd() + "/audioData/feature_data.csv"
+
     with open(filename, mode='w') as csvfile:
         fieldnames = feature_data[0].keys()
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for entry in feature_data:
             writer.writerow(entry)
-
-
-def corr_np(data1, data2):
-    mean1 = data1.mean()
-    mean2 = data2.mean()
-    std1 = data1.std()
-    std2 = data2.std()
-    corr = ((data1*data2).mean()-mean1*mean2)/(std1*std2)
-    return corr
 
 
 def generate_matrix():
@@ -101,7 +97,7 @@ def generate_matrix():
 
     tempo_data = df.loc[:, "tempo"]
     danger_ratings = dr.loc[:, "danger_rating"]
-    print(np.corrcoef(tempo_data, danger_ratings))
+    print(np.correlate(danger_ratings, tempo_data))
 
 
 if __name__ == "__main__":
